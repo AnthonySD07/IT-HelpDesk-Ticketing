@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h1 class="h5">#{{ ticket.pk }} {{ ticket.title }}</h1>
+          <span class="pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+        </div>
+        <p class="text-secondary small">
+          Raised by {{ ticket.created_by }} on {{ ticket.created_at|date:"d M Y H:i" }} · {{ ticket.category }}
+        </p>
+        <p style="white-space:pre-line">{{ ticket.description }}</p>
+        {% if ticket.screenshot %}
+          <img src="{{ ticket.screenshot.url }}" class="img-fluid rounded border" alt="Screenshot">
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h2 class="h6">Comments</h2>
+        {% for c in comments %}
+          <div class="border-bottom py-2">
+            <strong>{{ c.author }}</strong> <span class="text-secondary small">{{ c.created_at|date:"d M H:i" }}</span>
+            <div style="white-space:pre-line">{{ c.text }}</div>
+          </div>
+        {% empty %}
+          <p class="text-secondary small mb-0">No comments yet.</p>
+        {% endfor %}
+        <form method="post" class="mt-3">
+          {% csrf_token %}
+          {% include '_form_fields.html' %}
+          <button class="btn btn-primary">Post comment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body small">
+        <div class="mb-2"><span class="text-secondary">Priority</span><br><span class="pill prio-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></div>
+        <div class="mb-2"><span class="text-secondary">Assigned to</span><br>{{ ticket.assigned_to|default:"Unassigned" }}</div>
+        <div><span class="text-secondary">Due</span><br>{{ ticket.due_at|date:"d M Y H:i" }}
+          {% if ticket.is_overdue %}<strong class="text-danger">Overdue</strong>{% endif %}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body small">
+        <h2 class="h6">History</h2>
+        {% for h in history %}
+          <div class="mb-2">{{ h.old_status }} → {{ h.new_status }}<br><span class="text-secondary">{{ h.changed_by }}, {{ h.changed_at|date:"d M H:i" }}</span></div>
+        {% empty %}
+          <span class="text-secondary">No status changes yet.</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

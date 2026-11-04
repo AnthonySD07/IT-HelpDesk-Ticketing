@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-card card mx-auto">
+  <div class="card-body p-4">
+    <h1 class="h4 mb-3">Create an account</h1>
+    <form method="post">
+      {% csrf_token %}
+      {% include '_form_fields.html' %}
+      <button class="btn btn-primary w-100">Register</button>
+    </form>
+    <p class="small text-center mt-3 mb-0">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+  </div>
+</div>
+{% endblock %}

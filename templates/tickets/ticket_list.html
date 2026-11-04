@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 m-0">Tickets</h1>
+  {% if user.role != 'technician' %}
+    <a class="btn btn-primary" href="{% url 'ticket_create' %}">+ New ticket</a>
+  {% endif %}
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-12 col-md-5">
+    <input class="form-control" name="q" value="{{ q }}" placeholder="Search by title">
+  </div>
+  <div class="col-8 col-md-4">
+    <select class="form-select" name="status">
+      <option value="">All statuses</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-3"><button class="btn btn-outline-secondary w-100">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Priority</th><th>Assigned to</th><th>Due</th></tr></thead>
+      <tbody>
+      {% for t in tickets %}
+        <tr class="{% if t.is_overdue %}overdue-row{% endif %}">
+          <td>{{ t.pk }}</td>
+          <td><a href="{% url 'ticket_detail' t.pk %}">{{ t.title }}</a><div class="small text-secondary">{{ t.category }}</div></td>
+          <td><span class="pill status-{{ t.status }}">{{ t.get_status_display }}</span></td>
+          <td><span class="pill prio-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
+          <td>{{ t.assigned_to|default:"Unassigned" }}</td>
+          <td>{{ t.due_at|date:"d M H:i" }}{% if t.is_overdue %} <strong class="text-danger">Overdue</strong>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-secondary py-4">No tickets found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

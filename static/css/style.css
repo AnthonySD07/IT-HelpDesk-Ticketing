@@ -1,0 +1,29 @@
+:root {
+  --navy: #0F172A;
+  --indigo: #4F46E5;
+  --bg: #F8FAFC;
+  --border: #E2E8F0;
+  --overdue: #DC2626;
+  --bs-primary: #4F46E5;
+  --bs-primary-rgb: 79, 70, 229;
+  --bs-body-font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { background: var(--bg); color: var(--navy); }
+.app-nav { background: var(--navy); }
+.card { border: 1px solid var(--border); border-radius: 8px; box-shadow: none; }
+.btn-primary { --bs-btn-bg: var(--indigo); --bs-btn-border-color: var(--indigo);
+  --bs-btn-hover-bg: #4338CA; --bs-btn-hover-border-color: #4338CA;
+  --bs-btn-active-bg: #3730A3; --bs-btn-active-border-color: #3730A3; }
+a { color: var(--indigo); }
+.auth-card { max-width: 400px; }
+.pill { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 99px; }
+.status-open { background: #DBEAFE; color: #1E40AF; }
+.status-assigned { background: #EDE9FE; color: #5B21B6; }
+.status-in_progress { background: #FEF3C7; color: #92400E; }
+.status-waiting { background: #FFEDD5; color: #9A3412; }
+.status-resolved { background: #DCFCE7; color: #166534; }
+.status-closed { background: #E2E8F0; color: #475569; }
+.prio-high { background: #FEE2E2; color: #991B1B; }
+.prio-medium { background: #FEF3C7; color: #92400E; }
+.prio-low { background: #DCFCE7; color: #166534; }
+.overdue-row { background: #FEF2F2; }
