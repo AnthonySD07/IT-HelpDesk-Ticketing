@@ -21,6 +21,9 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'ticket_list' %}">Tickets</a></li>
           {% if user.role != 'technician' %}
             <li class="nav-item"><a class="nav-link" href="{% url 'ticket_create' %}">New ticket</a></li>
+          {% if user.role == 'admin' or user.is_superuser %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'reports' %}">Reports</a></li>
+          {% endif %}
           {% endif %}
         {% endif %}
       </ul>
