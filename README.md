@@ -1,4 +1,8 @@
 # IT Helpdesk Ticketing System
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![Django](https://img.shields.io/badge/Django-5-green)
+![Tests](https://img.shields.io/badge/tests-24%20passing-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 Individual Student Project, Project 8. Built by [Antonie Potgieter], student number [20260249] in collaboration With Cluade LLM
 
@@ -17,6 +21,13 @@ A web application where employees log IT problems, an admin assigns them to tech
 - Admin reports: open tickets per technician, average resolution time, tickets by category
 - Responsive interface (laptop and phone)
 
+## ScreenShots
+
+## Screenshots
+
+![Ticket list](docs/screenshots/ticket_list.png)
+![Ticket detail](docs/screenshots/ticket_detail.png)
+![Reports](docs/screenshots/reports.png)
 ## Tech stack
 
 Python 3, Django, SQLite, Bootstrap 5.
