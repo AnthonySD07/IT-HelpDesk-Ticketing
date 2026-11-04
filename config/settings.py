@@ -83,3 +83,7 @@ AUTH_USER_MODEL = 'tickets.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'ticket_list'
 LOGOUT_REDIRECT_URL = 'login'
+
+
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {message_constants.ERROR: 'danger'}

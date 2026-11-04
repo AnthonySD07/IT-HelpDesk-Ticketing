@@ -2,9 +2,13 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Avg, F, Q, ExpressionWrapper, DurationField
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import RegisterForm, TicketForm, CommentForm
-from .models import Ticket
+from django.utils import timezone
+from .forms import RegisterForm, TicketForm, CommentForm, AssignForm
+from .models import Ticket, User
+
+CLOSED_STATUSES = ['resolved', 'closed']
 
 
 def is_admin(user):
@@ -66,7 +70,6 @@ def ticket_create(request):
 
 @login_required
 def ticket_detail(request, pk):
-    # Tickets the user may not see return 404, so their existence isn't leaked
     ticket = get_object_or_404(visible_tickets(request.user), pk=pk)
     form = CommentForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -76,9 +79,75 @@ def ticket_detail(request, pk):
         comment.save()
         messages.success(request, 'Comment added.')
         return redirect('ticket_detail', pk=ticket.pk)
+
+    labels = dict(Ticket.STATUS_CHOICES)
+    next_statuses = [(s, labels[s]) for s in ticket.next_statuses(request.user)]
+    can_assign = is_admin(request.user) and ticket.status not in ('resolved', 'closed')
     return render(request, 'tickets/ticket_detail.html', {
         'ticket': ticket,
         'form': form,
         'comments': ticket.comments.select_related('author').order_by('created_at'),
         'history': ticket.history.select_related('changed_by').order_by('-changed_at'),
+        'next_statuses': next_statuses,
+        'assign_form': AssignForm() if can_assign else None,
+    })
+
+
+@login_required
+def ticket_assign(request, pk):
+    if not is_admin(request.user):
+        raise PermissionDenied
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if request.method == 'POST':
+        form = AssignForm(request.POST)
+        if ticket.status in ('resolved', 'closed'):
+            messages.error(request, 'This ticket is already resolved.')
+        elif form.is_valid():
+            ticket.assign(form.cleaned_data['technician'], request.user)
+            messages.success(request, f"Assigned to {form.cleaned_data['technician']}.")
+        else:
+            messages.error(request, 'Choose a technician.')
+    return redirect('ticket_detail', pk=pk)
+
+
+@login_required
+def ticket_status(request, pk):
+    ticket = get_object_or_404(visible_tickets(request.user), pk=pk)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in ticket.next_statuses(request.user):
+            ticket.change_status(new_status, request.user)
+            messages.success(request, f'Status changed to {ticket.get_status_display()}.')
+        else:
+            messages.error(request, 'That status change is not allowed.')
+    return redirect('ticket_detail', pk=pk)
+
+
+@login_required
+def reports(request):
+    if not is_admin(request.user):
+        raise PermissionDenied
+
+    open_per_tech = User.objects.filter(role='technician').annotate(
+        open_count=Count('tickets_assigned',
+                         filter=~Q(tickets_assigned__status__in=CLOSED_STATUSES))
+    ).order_by('-open_count', 'username')
+
+    avg = Ticket.objects.filter(resolved_at__isnull=False).aggregate(
+        avg=Avg(ExpressionWrapper(F('resolved_at') - F('created_at'),
+                                  output_field=DurationField())))['avg']
+    avg_hours = round(avg.total_seconds() / 3600, 1) if avg else None
+
+    by_category = Ticket.objects.values('category__name').annotate(
+        total=Count('id')).order_by('-total')
+
+    active = Ticket.objects.exclude(status__in=CLOSED_STATUSES)
+    return render(request, 'tickets/reports.html', {
+        'open_per_tech': open_per_tech,
+        'avg_hours': avg_hours,
+        'by_category': by_category,
+        'total_tickets': Ticket.objects.count(),
+        'open_tickets': active.count(),
+        'overdue_tickets': active.filter(due_at__lt=timezone.now()).count(),
+        'unassigned': active.filter(assigned_to__isnull=True).count(),
     })

@@ -76,6 +76,38 @@ class Ticket(models.Model):
     def can_move_to(self, new_status):
         return new_status in self.ALLOWED_TRANSITIONS[self.status]
 
+    def next_statuses(self, user):
+        """Which statuses this user may move the ticket to."""
+        options = self.ALLOWED_TRANSITIONS[self.status]
+        if user.role == 'admin' or user.is_superuser:
+            return options
+        if user.role == 'technician' and self.assigned_to_id == user.id:
+            return options
+        if self.created_by_id == user.id and self.status in ('resolved', 'waiting'):
+            return options
+        return []
+
+    def change_status(self, new_status, user):
+        if not self.can_move_to(new_status):
+            raise ValueError(f'Cannot move from {self.status} to {new_status}.')
+        StatusHistory.objects.create(ticket=self, changed_by=user,
+                                     old_status=self.status, new_status=new_status)
+        self.status = new_status
+        if new_status == 'resolved':
+            self.resolved_at = timezone.now()
+        elif new_status == 'in_progress':
+            self.resolved_at = None
+        self.save()
+
+    def assign(self, technician, user):
+        if technician.role != 'technician':
+            raise ValueError('Tickets can only be assigned to technicians.')
+        self.assigned_to = technician
+        if self.status == 'open':
+            self.change_status('assigned', user)  # also saves
+        else:
+            self.save()
+
     @property
     def is_overdue(self):
         return self.status not in ('resolved', 'closed') and timezone.now() > self.due_at
@@ -94,6 +126,6 @@ class Comment(models.Model):
 class StatusHistory(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='history')
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    old_status = models.CharField(max_length=20)
-    new_status = models.CharField(max_length=20)
+    old_status = models.CharField(max_length=20, choices=Ticket.STATUS_CHOICES)
+    new_status = models.CharField(max_length=20, choices=Ticket.STATUS_CHOICES)
     changed_at = models.DateTimeField(auto_now_add=True)

@@ -39,6 +39,36 @@
   </div>
 
   <div class="col-12 col-lg-4">
+    {% if assign_form %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h2 class="h6">Assign technician</h2>
+        <form method="post" action="{% url 'ticket_assign' ticket.pk %}">
+          {% csrf_token %}
+          <div class="mb-2">{{ assign_form.technician }}</div>
+          <button class="btn btn-primary btn-sm">Assign</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if next_statuses %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h2 class="h6">Update status</h2>
+        <form method="post" action="{% url 'ticket_status' ticket.pk %}">
+          {% csrf_token %}
+          <select name="status" class="form-select mb-2">
+            {% for value, label in next_statuses %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm">Update</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="card mb-3">
       <div class="card-body small">
         <div class="mb-2"><span class="text-secondary">Priority</span><br><span class="pill prio-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></div>
@@ -47,11 +77,12 @@
           {% if ticket.is_overdue %}<strong class="text-danger">Overdue</strong>{% endif %}</div>
       </div>
     </div>
+
     <div class="card">
       <div class="card-body small">
         <h2 class="h6">History</h2>
         {% for h in history %}
-          <div class="mb-2">{{ h.old_status }} → {{ h.new_status }}<br><span class="text-secondary">{{ h.changed_by }}, {{ h.changed_at|date:"d M H:i" }}</span></div>
+          <div class="mb-2">{{ h.get_old_status_display }} → {{ h.get_new_status_display }}<br><span class="text-secondary">{{ h.changed_by }}, {{ h.changed_at|date:"d M H:i" }}</span></div>
         {% empty %}
           <span class="text-secondary">No status changes yet.</span>
         {% endfor %}

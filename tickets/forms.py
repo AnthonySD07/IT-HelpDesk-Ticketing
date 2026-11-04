@@ -70,3 +70,9 @@ class CommentForm(BootstrapMixin, forms.ModelForm):
         if not text:
             raise forms.ValidationError('Comment cannot be empty.')
         return text
+
+
+class AssignForm(BootstrapMixin, forms.Form):
+    technician = forms.ModelChoiceField(
+        queryset=User.objects.filter(role='technician'),
+        empty_label='Select technician')
