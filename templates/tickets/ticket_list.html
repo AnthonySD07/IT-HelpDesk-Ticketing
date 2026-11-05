@@ -1,43 +1,59 @@
 {% extends 'base.html' %}
+{% block title %}{{ list_title }}{% endblock %}
+{% block heading %}{{ list_title }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 m-0">Tickets</h1>
-  {% if user.role != 'technician' %}
-    <a class="btn btn-primary" href="{% url 'ticket_create' %}">+ New ticket</a>
-  {% endif %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-indigo"><i class="bi bi-inboxes"></i></div><div><div class="stat-num">{{ stats.total }}</div><div class="stat-label">Total tickets</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-num">{{ stats.open }}</div><div class="stat-label">Open</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-red"><i class="bi bi-alarm"></i></div><div><div class="stat-num">{{ stats.overdue }}</div><div class="stat-label">Overdue</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-green"><i class="bi bi-check2-circle"></i></div><div><div class="stat-num">{{ stats.resolved }}</div><div class="stat-label">Resolved</div></div></div></div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
-  <div class="col-12 col-md-5">
-    <input class="form-control" name="q" value="{{ q }}" placeholder="Search by title">
-  </div>
-  <div class="col-8 col-md-4">
-    <select class="form-select" name="status">
-      <option value="">All statuses</option>
-      {% for value, label in status_choices %}
-        <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-4 col-md-3"><button class="btn btn-outline-secondary w-100">Filter</button></div>
-</form>
-
 <div class="card">
+  <form method="get" class="row g-2 p-3 border-bottom m-0">
+    <div class="col-12 col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+        <input class="form-control" name="q" value="{{ q }}" placeholder="Search by title">
+      </div>
+    </div>
+    <div class="col-8 col-md-4">
+      <select class="form-select" name="status">
+        <option value="">All statuses</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-4 col-md-2 d-flex gap-2">
+      <button class="btn btn-outline-secondary flex-fill">Filter</button>
+    </div>
+  </form>
+
   <div class="table-responsive">
-    <table class="table align-middle mb-0">
-      <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Priority</th><th>Assigned to</th><th>Due</th></tr></thead>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Ticket</th><th>Status</th><th>Priority</th><th>Assigned to</th><th>Due</th></tr></thead>
       <tbody>
       {% for t in tickets %}
         <tr class="{% if t.is_overdue %}overdue-row{% endif %}">
-          <td>{{ t.pk }}</td>
-          <td><a href="{% url 'ticket_detail' t.pk %}">{{ t.title }}</a><div class="small text-secondary">{{ t.category }}</div></td>
+          <td class="text-secondary">{{ t.pk }}</td>
+          <td>
+            <a class="ticket-link" href="{% url 'ticket_detail' t.pk %}">{{ t.title }}</a>
+            <div class="small text-secondary">{{ t.category }} · {{ t.created_by }}</div>
+          </td>
           <td><span class="pill status-{{ t.status }}">{{ t.get_status_display }}</span></td>
           <td><span class="pill prio-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
-          <td>{{ t.assigned_to|default:"Unassigned" }}</td>
-          <td>{{ t.due_at|date:"d M H:i" }}{% if t.is_overdue %} <strong class="text-danger">Overdue</strong>{% endif %}</td>
+          <td>
+            {% if t.assigned_to %}
+              <span class="d-inline-flex align-items-center gap-2"><span class="avatar sm">{{ t.assigned_to.username|slice:":2"|upper }}</span>{{ t.assigned_to }}</span>
+            {% else %}
+              <span class="text-secondary">Unassigned</span>
+            {% endif %}
+          </td>
+          <td class="text-nowrap">{{ t.due_at|date:"d M, H:i" }}{% if t.is_overdue %}<div class="overdue-tag"><i class="bi bi-alarm"></i> Overdue</div>{% endif %}</td>
         </tr>
       {% empty %}
-        <tr><td colspan="6" class="text-center text-secondary py-4">No tickets found.</td></tr>
+        <tr><td colspan="6"><div class="empty"><i class="bi bi-inbox"></i>No tickets found.</div></td></tr>
       {% endfor %}
       </tbody>
     </table>

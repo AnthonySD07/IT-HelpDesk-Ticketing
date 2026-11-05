@@ -1,53 +1,52 @@
 {% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Reports</h1>
-
 <div class="row g-3 mb-4">
-  <div class="col-6 col-md-3"><div class="card"><div class="card-body">
-    <div class="small text-secondary">Total tickets</div><div class="fs-3">{{ total_tickets }}</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card"><div class="card-body">
-    <div class="small text-secondary">Open tickets</div><div class="fs-3">{{ open_tickets }}</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card"><div class="card-body">
-    <div class="small text-secondary">Overdue</div><div class="fs-3 text-danger">{{ overdue_tickets }}</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card"><div class="card-body">
-    <div class="small text-secondary">Unassigned</div><div class="fs-3">{{ unassigned }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-indigo"><i class="bi bi-inboxes"></i></div><div><div class="stat-num">{{ total_tickets }}</div><div class="stat-label">Total tickets</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-num">{{ open_tickets }}</div><div class="stat-label">Open</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-red"><i class="bi bi-alarm"></i></div><div><div class="stat-num">{{ overdue_tickets }}</div><div class="stat-label">Overdue</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="stat-icon ic-green"><i class="bi bi-person-x"></i></div><div><div class="stat-num">{{ unassigned }}</div><div class="stat-label">Unassigned</div></div></div></div>
 </div>
 
 <div class="row g-3">
   <div class="col-12 col-lg-4">
-    <div class="card"><div class="card-body">
-      <h2 class="h6">Average resolution time</h2>
+    <div class="card h-100"><div class="card-body">
+      <h2 class="card-title">Average resolution time</h2>
       {% if avg_hours is not None %}
-        <div class="fs-3">{{ avg_hours }} hours</div>
+        <div class="stat-num" style="font-size:40px">{{ avg_hours }}<span class="text-secondary fs-5"> hours</span></div>
+        <div class="text-secondary small mt-1">From creation to resolved</div>
       {% else %}
-        <p class="text-secondary mb-0">No resolved tickets yet.</p>
+        <div class="empty py-4"><i class="bi bi-hourglass"></i>No resolved tickets yet.</div>
       {% endif %}
     </div></div>
   </div>
 
   <div class="col-12 col-lg-4">
-    <div class="card"><div class="card-body">
-      <h2 class="h6">Open tickets per technician</h2>
-      <table class="table table-sm mb-0">
-        {% for t in open_per_tech %}
-          <tr><td>{{ t.username }}</td><td class="text-end">{{ t.open_count }}</td></tr>
-        {% empty %}
-          <tr><td class="text-secondary">No technicians yet.</td></tr>
-        {% endfor %}
-      </table>
+    <div class="card h-100"><div class="card-body">
+      <h2 class="card-title">Open tickets per technician</h2>
+      {% for t in open_per_tech %}
+        <div class="bar-row">
+          <div class="bar-top"><span>{{ t.name }}</span><b class="fw-semibold">{{ t.count }}</b></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ t.pct }}%"></div></div>
+        </div>
+      {% empty %}
+        <div class="empty py-4"><i class="bi bi-people"></i>No technicians yet.</div>
+      {% endfor %}
     </div></div>
   </div>
 
   <div class="col-12 col-lg-4">
-    <div class="card"><div class="card-body">
-      <h2 class="h6">Tickets by category</h2>
-      <table class="table table-sm mb-0">
-        {% for c in by_category %}
-          <tr><td>{{ c.category__name }}</td><td class="text-end">{{ c.total }}</td></tr>
-        {% empty %}
-          <tr><td class="text-secondary">No tickets yet.</td></tr>
-        {% endfor %}
-      </table>
+    <div class="card h-100"><div class="card-body">
+      <h2 class="card-title">Tickets by category</h2>
+      {% for c in by_category %}
+        <div class="bar-row">
+          <div class="bar-top"><span>{{ c.name }}</span><b class="fw-semibold">{{ c.total }}</b></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ c.pct }}%"></div></div>
+        </div>
+      {% empty %}
+        <div class="empty py-4"><i class="bi bi-tags"></i>No tickets yet.</div>
+      {% endfor %}
     </div></div>
   </div>
 </div>

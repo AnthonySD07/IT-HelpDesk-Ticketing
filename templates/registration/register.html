@@ -1,14 +1,19 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="auth-card card mx-auto">
-  <div class="card-body p-4">
-    <h1 class="h4 mb-3">Create an account</h1>
-    <form method="post">
-      {% csrf_token %}
-      {% include '_form_fields.html' %}
-      <button class="btn btn-primary w-100">Register</button>
-    </form>
-    <p class="small text-center mt-3 mb-0">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+{% block title %}Register{% endblock %}
+{% block auth %}
+<div class="auth">
+  {% include '_auth_brand.html' %}
+  <div class="auth-form-wrap">
+    <div class="auth-form">
+      <h1 class="h3 mb-1">Create your account</h1>
+      <p class="text-secondary mb-4">It takes less than a minute.</p>
+      <form method="post">
+        {% csrf_token %}
+        {% include '_form_fields.html' %}
+        <button class="btn btn-primary w-100 py-2">Register</button>
+      </form>
+      <p class="text-center text-secondary mt-4 mb-0">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+    </div>
   </div>
 </div>
 {% endblock %}

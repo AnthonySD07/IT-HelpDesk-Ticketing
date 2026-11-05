@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Not found{% endblock %}
+{% block heading %}Not found{% endblock %}
+{% block content %}{% include '_error.html' with code='404' title='Page not found' text='The page may have moved, or you may not have access to it.' %}{% endblock %}
+{% block auth %}{% include '_error.html' with code='404' title='Page not found' text='The page may have moved, or you may not have access to it.' %}{% endblock %}

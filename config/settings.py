@@ -5,9 +5,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Keep the SECRET_KEY that Django generated for you in this line
 SECRET_KEY = 'django-insecure-y783ul1w$xr77=fzcj3q+=k(k0q&2ig93god8$@l@hso=0(u2)'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'it-help-desk-ticketing.vercel.app'
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

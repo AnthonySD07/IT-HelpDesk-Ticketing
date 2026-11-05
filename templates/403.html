@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Access denied{% endblock %}
+{% block heading %}Access denied{% endblock %}
+{% block content %}{% include '_error.html' with code='403' title='You do not have access to this page' text='Your role does not allow this action.' %}{% endblock %}
+{% block auth %}{% include '_error.html' with code='403' title='You do not have access to this page' text='Your role does not allow this action.' %}{% endblock %}

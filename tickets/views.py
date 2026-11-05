@@ -9,6 +9,8 @@ from .forms import RegisterForm, TicketForm, CommentForm, AssignForm
 from .models import Ticket, User
 
 CLOSED_STATUSES = ['resolved', 'closed']
+FLOW = [('open', 'Open'), ('assigned', 'Assigned'), ('in_progress', 'In progress'),
+        ('resolved', 'Resolved'), ('closed', 'Closed')]
 
 
 def is_admin(user):
@@ -22,6 +24,28 @@ def visible_tickets(user):
     if user.role == 'technician':
         return Ticket.objects.filter(assigned_to=user)
     return Ticket.objects.filter(created_by=user)
+
+
+def progress_steps(ticket):
+    current = 'in_progress' if ticket.status == 'waiting' else ticket.status
+    keys = [k for k, _ in FLOW]
+    index = keys.index(current)
+    steps = []
+    for i, (key, label) in enumerate(FLOW):
+        state = 'done' if i < index else 'current' if i == index else 'todo'
+        if key == 'closed' and ticket.status == 'closed':
+            state = 'done'
+        if key == 'in_progress' and ticket.status == 'waiting':
+            label = 'Waiting on user'
+        steps.append({'label': label, 'state': state})
+    return steps
+
+
+def with_percent(items, key):
+    biggest = max([i[key] for i in items], default=0)
+    for i in items:
+        i['pct'] = round(i[key] * 100 / biggest) if biggest else 0
+    return items
 
 
 def register(request):
@@ -38,16 +62,31 @@ def register(request):
 
 @login_required
 def ticket_list(request):
-    tickets = visible_tickets(request.user).select_related(
-        'category', 'created_by', 'assigned_to').order_by('-created_at')
+    base = visible_tickets(request.user)
+    active = base.exclude(status__in=CLOSED_STATUSES)
+    stats = {
+        'total': base.count(),
+        'open': active.count(),
+        'overdue': active.filter(due_at__lt=timezone.now()).count(),
+        'resolved': base.filter(status__in=CLOSED_STATUSES).count(),
+    }
+    tickets = base.select_related('category', 'created_by', 'assigned_to').order_by('-created_at')
     status = request.GET.get('status', '')
     q = request.GET.get('q', '').strip()
     if status:
         tickets = tickets.filter(status=status)
     if q:
         tickets = tickets.filter(title__icontains=q)
+    if is_admin(request.user):
+        list_title = 'All tickets'
+    elif request.user.role == 'technician':
+        list_title = 'Assigned to me'
+    else:
+        list_title = 'My tickets'
     return render(request, 'tickets/ticket_list.html', {
         'tickets': tickets,
+        'stats': stats,
+        'list_title': list_title,
         'status_choices': Ticket.STATUS_CHOICES,
         'current_status': status,
         'q': q,
@@ -86,6 +125,7 @@ def ticket_detail(request, pk):
     return render(request, 'tickets/ticket_detail.html', {
         'ticket': ticket,
         'form': form,
+        'steps': progress_steps(ticket),
         'comments': ticket.comments.select_related('author').order_by('created_at'),
         'history': ticket.history.select_related('changed_by').order_by('-changed_at'),
         'next_statuses': next_statuses,
@@ -128,18 +168,22 @@ def reports(request):
     if not is_admin(request.user):
         raise PermissionDenied
 
-    open_per_tech = User.objects.filter(role='technician').annotate(
+    techs = User.objects.filter(role='technician').annotate(
         open_count=Count('tickets_assigned',
                          filter=~Q(tickets_assigned__status__in=CLOSED_STATUSES))
     ).order_by('-open_count', 'username')
+    open_per_tech = with_percent(
+        [{'name': t.username, 'count': t.open_count} for t in techs], 'count')
 
     avg = Ticket.objects.filter(resolved_at__isnull=False).aggregate(
         avg=Avg(ExpressionWrapper(F('resolved_at') - F('created_at'),
                                   output_field=DurationField())))['avg']
     avg_hours = round(avg.total_seconds() / 3600, 1) if avg else None
 
-    by_category = Ticket.objects.values('category__name').annotate(
+    categories = Ticket.objects.values('category__name').annotate(
         total=Count('id')).order_by('-total')
+    by_category = with_percent(
+        [{'name': c['category__name'], 'total': c['total']} for c in categories], 'total')
 
     active = Ticket.objects.exclude(status__in=CLOSED_STATUSES)
     return render(request, 'tickets/reports.html', {
